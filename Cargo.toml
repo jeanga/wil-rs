@@ -8,7 +8,6 @@ license = "MIT"
 description = "my package description"
 documentation = "docs.rs"
 repository = "https://github.com/jeanga/wil-rs"
-readme = "README.md"
 keywords = ["winapi", "win32", "token"]
 categories = []
 
