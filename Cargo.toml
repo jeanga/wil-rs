@@ -7,10 +7,9 @@ publish = ["crates.io"]
 license = "MIT"
 description = "my package description"
 documentation = "docs.rs"
-homepage = "https://my-project.org"
 repository = "https://github.com/jeanga/wil-rs"
 readme = "README.md"
-keywords = []
+keywords = ["winapi", "win32", "token"]
 categories = []
 
 [dependencies]
