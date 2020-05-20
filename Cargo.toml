@@ -1,0 +1,19 @@
+[package]
+name = "wil"
+version = "0.0.1"
+authors = ["Jean Gautier <jeanga@hotmail.com>"]
+edition = "2018"
+publish = ["crates.io"]
+license = "MIT"
+description = "my package description"
+documentation = "docs.rs"
+homepage = "https://my-project.org"
+repository = "https://github.com/jeanga/wil-rs"
+readme = "README.md"
+keywords = []
+categories = []
+
+[dependencies]
+log = "0.4.8"
+winapi = {version = "0.3.8", features = ["securitybaseapi", "handleapi", "processthreadsapi", "errhandlingapi"]}
+
