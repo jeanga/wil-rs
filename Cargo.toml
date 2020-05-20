@@ -6,7 +6,6 @@ edition = "2018"
 publish = ["crates-io"]
 license = "MIT"
 description = "my package description"
-documentation = "docs.rs"
 repository = "https://github.com/jeanga/wil-rs"
 keywords = ["winapi", "win32", "token"]
 categories = []
