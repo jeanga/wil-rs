@@ -19,17 +19,22 @@ Feel free to create an issue, open a pull request.
 
 ## Example ##
 
-This example is not correct... (yet)
-
 Cargo.toml:
 ```toml
 [target.'cfg(windows)'.dependencies]
-wil = { version = "0.0.1" }
+wil = "0.0.3" 
+winapi = "0.3.8"
 ```
 main.rs:
 ```Rust
 
-fn main() -> Result<(), {
+use wil::token::Token;
+use wil::errorhandling::WinAPIError;
+
+use winapi::um::winnt::{TokenImpersonation, TokenPrimary};
+use winapi::um::winnt::{TOKEN_DUPLICATE, TOKEN_QUERY, TOKEN_QUERY_SOURCE};
+
+fn main() -> Result<(), WinAPIError> {
 
     let token =
         Token::from_current_process(TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE)?;
@@ -48,8 +53,10 @@ fn main() -> Result<(), {
         }
     }
     else {
-
+        println!("user is an admin");
     }
+    Ok(())
 }
+
 
 ```
