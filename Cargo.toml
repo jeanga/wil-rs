@@ -1,6 +1,6 @@
 [package]
 name = "wil"
-version = "0.0.5"
+version = "0.0.6"
 authors = ["Jean Gautier <jeanga@hotmail.com>"]
 edition = "2018"
 publish = ["crates-io"]
@@ -9,9 +9,11 @@ description = "This crates is a demonstrator of what a Windows Implementation Li
 repository = "https://github.com/jeanga/wil-rs"
 readme = "README.md"
 keywords = ["winapi", "win32", "token"]
-categories = []
+categories = ["os::windows-apis"]
 
 [dependencies]
 log = "0.4.8"
 winapi = {version = "0.3.8", features = ["securitybaseapi", "handleapi", "processthreadsapi", "errhandlingapi"]}
 
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
