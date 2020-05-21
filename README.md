@@ -1,7 +1,7 @@
 # wil-rs
 Windows Implementation Library for Rust
 
-[Documentation](https://docs.rs/winapi/)
+[Documentation](https://docs.rs/wil/)
 
 This crate does _not_ provide raw FFI bindings to Windows API (the winapi crate is what you are looking for).
 This crate does demonstrate what a Windows Implementation Library could look like in Rust ("à la" https://github.com/microsoft/wil in C++).
