@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-mod errorhandling;
-mod token;
+pub mod errorhandling;
+pub mod token;
 
 #[cfg(test)]
 mod tests {
