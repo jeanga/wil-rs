@@ -4,7 +4,9 @@ use winapi::um::handleapi::{CloseHandle, INVALID_HANDLE_VALUE};
 
 use winapi::um::winnt::{HANDLE, PHANDLE, PVOID};
 
-use winapi::um::processthreadsapi::{GetCurrentProcess, OpenProcessToken, GetCurrentThread, OpenThreadToken};
+use winapi::um::processthreadsapi::{
+    GetCurrentProcess, GetCurrentThread, OpenProcessToken, OpenThreadToken,
+};
 use winapi::um::securitybaseapi::{DuplicateToken, GetTokenInformation};
 use winapi::um::winnt::{
     TokenElevationType, TokenElevationTypeLimited, TokenLinkedToken, TokenType,
@@ -66,12 +68,14 @@ impl Token {
     }
 
     pub fn from_current_process(mode: DWORD) -> Result<Token, WinAPIError> {
-        unsafe {
-            Self::from_process(GetCurrentProcess(), mode)
-        }
+        unsafe { Self::from_process(GetCurrentProcess(), mode) }
     }
 
-    pub fn from_thread(handle: HANDLE, mode: DWORD, open_as_self: BOOL) -> Result<Token, WinAPIError> {
+    pub fn from_thread(
+        handle: HANDLE,
+        mode: DWORD,
+        open_as_self: BOOL,
+    ) -> Result<Token, WinAPIError> {
         let mut token: HANDLE = INVALID_HANDLE_VALUE;
         unsafe {
             if OpenThreadToken(handle, mode, open_as_self, &mut token) == FALSE {
@@ -85,9 +89,7 @@ impl Token {
     }
 
     pub fn from_current_thread(mode: DWORD, open_as_self: BOOL) -> Result<Token, WinAPIError> {
-        unsafe {
-            Token::from_thread(GetCurrentThread(), mode, open_as_self)
-        }
+        unsafe { Token::from_thread(GetCurrentThread(), mode, open_as_self) }
     }
 
     pub fn token_type(&self) -> Result<TOKEN_TYPE, WinAPIError> {
@@ -267,8 +269,7 @@ mod tests {
 
     #[test]
     fn get_token_type() {
-        let token =
-            Token::from_current_process(TOKEN_QUERY).expect("failed to open process token");
+        let token = Token::from_current_process(TOKEN_QUERY).expect("failed to open process token");
 
         let token_type = token.token_type().expect("failed to obtain the token type");
         assert!(token_type == TokenImpersonation || token_type == TokenPrimary);
@@ -276,8 +277,8 @@ mod tests {
 
     #[test]
     fn get_token_source() {
-        let token =
-            Token::from_current_process(TOKEN_QUERY|TOKEN_QUERY_SOURCE).expect("failed to open process token");
+        let token = Token::from_current_process(TOKEN_QUERY | TOKEN_QUERY_SOURCE)
+            .expect("failed to open process token");
 
         let _source = token
             .source_token()
