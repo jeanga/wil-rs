@@ -23,11 +23,14 @@ use winapi::shared::minwindef::{BOOL, DWORD, FALSE, PBOOL, TRUE};
 use winapi::um::errhandlingapi::GetLastError;
 
 #[derive(Debug)]
+/// Token encapsulates a security token
+/// A token identifies the security context a process or thread is running under
 pub struct Token {
     h_token: HANDLE,
 }
 
 impl Default for Token {
+    // This is the default, invalid value of a security token
     fn default() -> Self {
         Token {
             h_token: INVALID_HANDLE_VALUE,
@@ -35,7 +38,9 @@ impl Default for Token {
     }
 }
 
+/// the Drop trait is called when the lifetime of the Token expires (aka the destructor)
 impl Drop for Token {
+    /// Probably the most important function of this whole file, making sure we release the token
     fn drop(&mut self) {
         unsafe {
             if self.h_token != INVALID_HANDLE_VALUE {
@@ -45,15 +50,20 @@ impl Drop for Token {
     }
 }
 
+/// the Clone trait is called when a copy of the token needs to be created
 impl Clone for Token {
+    /// Windows allows for a security token to be duplicated
+    /// This copy will have the same type as the original token
     fn clone(&self) -> Self {
-        // Clone mut duplicate the token "as is", using it's type
+        // Clone mut duplicate the token "as is", using it's original type (Impersonation or Primary)
         self.duplicate(self.token_type().expect("unable to determine token type"))
             .expect("failed to duplicate token")
     }
 }
 
 impl Token {
+    /// Returns the token associated with the process' handle.
+    /// mode is the token acces mode, valid values are: TOKEN_DUPLICATE, TOKEN_QUERY, TOKEN_QUERY_SOURCE
     pub fn from_process(handle: HANDLE, mode: DWORD) -> Result<Token, WinAPIError> {
         let mut token: HANDLE = INVALID_HANDLE_VALUE;
         unsafe {
@@ -67,10 +77,14 @@ impl Token {
         Ok(Token { h_token: token })
     }
 
+    /// Returns the token associated with the current process
+    /// mode is the token acces mode, valid values are: TOKEN_DUPLICATE, TOKEN_QUERY, TOKEN_QUERY_SOURCE
     pub fn from_current_process(mode: DWORD) -> Result<Token, WinAPIError> {
         unsafe { Self::from_process(GetCurrentProcess(), mode) }
     }
 
+    /// Returns the token associated with the thread's handle.
+    /// mode is the token acces mode, valid values are: TOKEN_DUPLICATE, TOKEN_QUERY, TOKEN_QUERY_SOURCE
     pub fn from_thread(
         handle: HANDLE,
         mode: DWORD,
@@ -88,10 +102,12 @@ impl Token {
         Ok(Token { h_token: token })
     }
 
+    /// Returns the token associated with the current thread calling this function.
     pub fn from_current_thread(mode: DWORD, open_as_self: BOOL) -> Result<Token, WinAPIError> {
         unsafe { Token::from_thread(GetCurrentThread(), mode, open_as_self) }
     }
 
+    /// Returns the token's type (Primary or Impersonation)
     pub fn token_type(&self) -> Result<TOKEN_TYPE, WinAPIError> {
         unsafe {
             let mut token_type: TOKEN_TYPE = std::mem::zeroed();
@@ -118,6 +134,8 @@ impl Token {
         }
     }
 
+    /// Duplicates the token and returns the token's copy
+    /// The type argument allows to obtain a copy of the seld token with a different type
     pub fn duplicate(&self, tokentype: TOKEN_TYPE) -> Result<Token, WinAPIError> {
         unsafe {
             let mut dup_token: HANDLE = std::ptr::null_mut();
@@ -133,6 +151,7 @@ impl Token {
         }
     }
 
+    /// Checks if the self token is a member of a specific well known group
     pub fn is_member(&self, known_sid: WELL_KNOWN_SID_TYPE) -> Result<bool, WinAPIError> {
         unsafe {
             let mut admin_sid = vec![0u8; SECURITY_MAX_SID_SIZE];
@@ -165,10 +184,12 @@ impl Token {
         }
     }
 
+    /// Checks if the self token is a member of the builtin Administrator's group
     pub fn is_admin(&self) -> Result<bool, WinAPIError> {
         self.is_member(WinBuiltinAdministratorsSid)
     }
 
+    /// Checks if the token is a limited token sourced from a token with administator's privilege
     pub fn can_elevate(&self) -> Result<bool, WinAPIError> {
         let source = self.source_token()?;
 
@@ -178,6 +199,7 @@ impl Token {
         }
     }
 
+    // If the token is a limited token, this function will return the sourc token
     pub fn source_token(&self) -> Result<Option<Token>, WinAPIError> {
         unsafe {
             let mut token_info: TOKEN_ELEVATION_TYPE = std::mem::zeroed();
