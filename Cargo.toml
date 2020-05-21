@@ -1,12 +1,13 @@
 [package]
 name = "wil"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["Jean Gautier <jeanga@hotmail.com>"]
 edition = "2018"
 publish = ["crates-io"]
 license = "MIT"
 description = "This crates is a demonstrator of what a Windows Implementation Library in Rust could look like"
 repository = "https://github.com/jeanga/wil-rs"
+readme = "README.md"
 keywords = ["winapi", "win32", "token"]
 categories = []
 
