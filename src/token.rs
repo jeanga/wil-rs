@@ -4,7 +4,7 @@ use winapi::um::handleapi::{CloseHandle, INVALID_HANDLE_VALUE};
 
 use winapi::um::winnt::{HANDLE, PHANDLE, PVOID};
 
-use winapi::um::processthreadsapi::{GetCurrentProcess, OpenProcessToken};
+use winapi::um::processthreadsapi::{GetCurrentProcess, OpenProcessToken, GetCurrentThread, OpenThreadToken};
 use winapi::um::securitybaseapi::{DuplicateToken, GetTokenInformation};
 use winapi::um::winnt::{
     TokenElevationType, TokenElevationTypeLimited, TokenLinkedToken, TokenType,
@@ -16,9 +16,9 @@ use winapi::um::winnt::{
     WinBuiltinAdministratorsSid, PSID, SECURITY_MAX_SID_SIZE, WELL_KNOWN_SID_TYPE,
 };
 
+use crate::errorhandling::WinAPIError;
 use winapi::shared::minwindef::{BOOL, DWORD, FALSE, PBOOL, TRUE};
 use winapi::um::errhandlingapi::GetLastError;
-use crate::errorhandling::WinAPIError;
 
 #[derive(Debug)]
 pub struct Token {
@@ -52,10 +52,10 @@ impl Clone for Token {
 }
 
 impl Token {
-    pub fn get_process_token(mode: DWORD) -> Result<Token, WinAPIError> {
+    pub fn from_process(handle: HANDLE, mode: DWORD) -> Result<Token, WinAPIError> {
         let mut token: HANDLE = INVALID_HANDLE_VALUE;
         unsafe {
-            if OpenProcessToken(GetCurrentProcess(), mode, &mut token) == FALSE {
+            if OpenProcessToken(handle, mode, &mut token) == FALSE {
                 let err = GetLastError();
                 log::debug!("Error getting process token GetLastError: {}", err);
                 return Err(WinAPIError::LastError(err));
@@ -63,6 +63,31 @@ impl Token {
         }
 
         Ok(Token { h_token: token })
+    }
+
+    pub fn from_current_process(mode: DWORD) -> Result<Token, WinAPIError> {
+        unsafe {
+            Self::from_process(GetCurrentProcess(), mode)
+        }
+    }
+
+    pub fn from_thread(handle: HANDLE, mode: DWORD, open_as_self: BOOL) -> Result<Token, WinAPIError> {
+        let mut token: HANDLE = INVALID_HANDLE_VALUE;
+        unsafe {
+            if OpenThreadToken(handle, mode, open_as_self, &mut token) == FALSE {
+                let err = GetLastError();
+                log::debug!("Error getting process token GetLastError: {}", err);
+                return Err(WinAPIError::LastError(err));
+            }
+        }
+
+        Ok(Token { h_token: token })
+    }
+
+    pub fn from_current_thread(mode: DWORD, open_as_self: BOOL) -> Result<Token, WinAPIError> {
+        unsafe {
+            Token::from_thread(GetCurrentThread(), mode, open_as_self)
+        }
     }
 
     pub fn token_type(&self) -> Result<TOKEN_TYPE, WinAPIError> {
@@ -204,25 +229,26 @@ impl Token {
 #[cfg(test)]
 mod tests {
 
+    use super::*;
     use winapi::um::winnt::{TokenImpersonation, TokenPrimary};
     use winapi::um::winnt::{TOKEN_DUPLICATE, TOKEN_QUERY, TOKEN_QUERY_SOURCE};
-    use super::*;
 
     pub enum IsAdmin {
         NotAnAdmin,
         Admin,
         CanElevate,
     }
-    
+
     pub fn is_admin() -> Result<IsAdmin, WinAPIError> {
-        let token = Token::get_process_token(TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE)?;
-    
+        let token =
+            Token::from_current_process(TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE)?;
+
         let token = if token.token_type()? == TokenPrimary {
             token.duplicate(TokenImpersonation)?
         } else {
             token
         };
-    
+
         if !token.is_admin()? {
             if token.can_elevate()? {
                 return Ok(IsAdmin::CanElevate);
@@ -234,8 +260,32 @@ mod tests {
     }
 
     #[test]
+    fn get_process_token() {
+        let _token =
+            Token::from_current_process(TOKEN_QUERY).expect("failed to open process token");
+    }
+
+    #[test]
+    fn get_token_type() {
+        let token =
+            Token::from_current_process(TOKEN_QUERY).expect("failed to open process token");
+
+        let token_type = token.token_type().expect("failed to obtain the token type");
+        assert!(token_type == TokenImpersonation || token_type == TokenPrimary);
+    }
+
+    #[test]
+    fn get_token_source() {
+        let token =
+            Token::from_current_process(TOKEN_QUERY|TOKEN_QUERY_SOURCE).expect("failed to open process token");
+
+        let _source = token
+            .source_token()
+            .expect("failed to get information on source token");
+    }
+
+    #[test]
     fn test_is_admin() {
         let _is_admin = is_admin().expect("failed to determine if current user is an admin");
     }
-
 }
