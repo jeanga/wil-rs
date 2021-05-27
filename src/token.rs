@@ -315,5 +315,4 @@ mod tests {
     fn test_is_admin() {
         let _is_admin = is_admin().expect("failed to determine if current user is an admin");
     }
-
 }

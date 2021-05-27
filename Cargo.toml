@@ -13,7 +13,7 @@ categories = ["os::windows-apis"]
 
 [dependencies]
 log = "0.4.8"
-winapi = {version = "0.3.8", features = ["securitybaseapi", "handleapi", "processthreadsapi", "errhandlingapi"]}
+winapi = {version = "0.3.8", features = ["securitybaseapi", "handleapi", "processthreadsapi", "winreg", "errhandlingapi"]}
 
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"
